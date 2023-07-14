@@ -60,7 +60,7 @@ const SignInButton = (props: { provider: "GitHub" | "Google" | "email" }) => {
         className="cursor relative mx-8 h-14 rounded-full bg-slate-300 py-4 font-auth font-medium text-primary-700 transition-colors hover:brightness-100 active:bg-primary-50"
         onClick={handleClick}
       >
-        <span className="absolute -top-1 left-0 flex h-full w-full flex-row items-center justify-center rounded-full bg-white pl-8 transition-transform active:translate-y-1 active:bg-primary-50">
+        <span className="absolute -top-1 left-0 flex h-full w-full flex-row items-center justify-center rounded-full bg-white pl-8 transition-transform hover:-translate-y-px active:translate-y-1 active:bg-primary-50">
           <span className="absolute left-6">{providerLogos[provider]}</span>
           <span className="">
             <span className="mx-auto">{buttonText}</span>
