@@ -24,6 +24,15 @@ export default {
       fontFamily: {
         auth: ["Roboto", "sans-serif"],
       },
+      animation: {
+        "slide-in": "slideIn 750ms ease-in-out 1s 1 forwards",
+      },
+      keyframes: {
+        slideIn: {
+          "0%": { transform: "translateX(100%)" },
+          "100%": { transform: "translateX(0)" },
+        },
+      },
     },
   },
   plugins: [],
