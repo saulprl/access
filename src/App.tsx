@@ -1,13 +1,12 @@
 import { useState } from "react";
 
+import { IconContext } from "react-icons";
+
 import { FaGithub } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { MdEmail } from "react-icons/md";
 
 import accessLogo from "./assets/csipro-access.png";
-import github from "./assets/auth-providers/github-mark.png";
-import google from "./assets/auth-providers/google-g.png";
-import { IconContext } from "react-icons";
 
 function App() {
   return (
