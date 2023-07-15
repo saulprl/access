@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.csipro.access",
+      "sha256_cert_fingerprints": [
+        "DF:9F:E0:31:26:0B:62:24:05:40:44:2B:07:EA:AE:67:76:30:3A:15:D2:05:11:D7:E5:59:A2:A6:CB:48:8F:EA"
+      ]
+    }
+  }
+]
