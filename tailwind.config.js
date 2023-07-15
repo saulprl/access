@@ -26,11 +26,16 @@ export default {
       },
       animation: {
         "slide-in": "slideIn 750ms ease-in-out 1s 1 forwards",
+        "fade-in": "fadeIn 750ms ease-in-out 1750ms 1 forwards",
       },
       keyframes: {
         slideIn: {
           "0%": { transform: "translateX(100%)" },
           "100%": { transform: "translateX(0)" },
+        },
+        fadeIn: {
+          "0%": { opacity: 0 },
+          "100%": { opacity: 1 },
         },
       },
     },

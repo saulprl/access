@@ -2,13 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+@layer base {
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+#root {
   font-family: Poppins, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
   /* color: rgba(255, 255, 255, 0.87); */
   background-color: white;
+  height: 100%;
+  width: 100%;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -21,7 +31,7 @@
 body {
   margin: 0;
   box-sizing: border-box;
-  display: flex;
-  min-width: 100vw;
-  min-height: 100vh;
+  /* display: flex; */
+  width: 100vw;
+  height: 100vh;
 }
