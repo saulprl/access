@@ -105,6 +105,7 @@ export const SignUp = () => {
     }
 
     setCsiId(2);
+    nextStep();
   };
 
   return (
@@ -228,6 +229,12 @@ export const SignUp = () => {
                 className="flex-[2]"
               />
             </div>
+          </Step>
+          <Step>
+            <h1 className="text-center text-3xl font-bold">You're all set!</h1>
+            <p className="mb-3 text-center">
+              Thanks for helping out with the migration process
+            </p>
           </Step>
         </div>
       </div>

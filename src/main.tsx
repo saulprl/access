@@ -1,10 +1,18 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.tsx'
-import './index.css'
+import React from "react";
+import ReactDOM from "react-dom/client";
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+import { FirebaseAppProvider } from "reactfire";
+
+import AppProviders from "./App.tsx";
+
+import { firebaseConfig } from "./firebase.ts";
+
+import "./index.css";
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    <FirebaseAppProvider firebaseConfig={firebaseConfig}>
+      <AppProviders />
+    </FirebaseAppProvider>
   </React.StrictMode>,
-)
+);

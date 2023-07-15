@@ -15,9 +15,8 @@ export const Splash = ({ message, loading = false }: Props) => {
         width={350}
         className="absolute left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]"
       />
-      {loading || (true && <LoadingSpinner />)}
-      <p>lol</p>
-      {message && <p>{message}</p>}
+      {loading && <LoadingSpinner />}
+      {message && <p className="max-w-[90%] text-center">{message}</p>}
     </div>
   );
 };
