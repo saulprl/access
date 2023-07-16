@@ -14,7 +14,7 @@ import { AiOutlineQuestionCircle } from "react-icons/ai";
 interface Props {
   id: string;
   label: string;
-  value: InputHTMLAttributes<HTMLInputElement>["value"];
+  value?: InputHTMLAttributes<HTMLInputElement>["value"];
   icon: ReactNode;
   tooltip?: string;
   disabled?: boolean;
@@ -23,6 +23,7 @@ interface Props {
   type?: HTMLInputTypeAttribute;
   error?: string;
   maxLength?: number;
+  defaultValue?: InputHTMLAttributes<HTMLInputElement>["defaultValue"];
 }
 
 export const Input: FC<Props> = ({
@@ -34,6 +35,7 @@ export const Input: FC<Props> = ({
   placeholder,
   error,
   maxLength,
+  defaultValue,
   onChange,
   disabled = false,
   type = "text",
@@ -73,6 +75,7 @@ export const Input: FC<Props> = ({
           <span className="absolute left-3">{icon}</span>
           <input
             id={id}
+            defaultValue={defaultValue}
             disabled={disabled}
             className="peer/input group w-full appearance-none bg-transparent placeholder-slate-400 placeholder-opacity-0 outline-none focus:placeholder-opacity-100"
             value={value}
@@ -102,7 +105,9 @@ export const Input: FC<Props> = ({
             </IconContext.Provider>
           )}
         </div>
-        {error && <p className="mx-4 ml-10 mt-1 text-xs text-error">{error}</p>}
+        {error && (
+          <p className="mt-1 max-w-[60%] mx-auto text-xs text-error">{error}</p>
+        )}
       </div>
     </IconContext.Provider>
   );
