@@ -17,27 +17,9 @@ export const AuthCallback = () => {
   const navigate = useNavigate();
 
   const handleGitHubCallback = useCallback(
-    async (code: string) => {
-      const uri = new URL("https://github.com/login/oauth/access_token");
-      const body = {
-        client_id: import.meta.env.VITE_GITHUB_CLIENT_ID as string,
-        client_secret: import.meta.env.VITE_GITHUB_CLIENT_SECRET as string,
-        code,
-      };
-
-      const res = await fetch(uri, {
-        method: "POST",
-        headers: { Accept: "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        const token = data.token as string;
-        const credential = GithubAuthProvider.credential(token);
-        await signInWithCredential(auth, credential);
-      }
+    async (token: string) => {
+      const credential = GithubAuthProvider.credential(token);
+      await signInWithCredential(auth, credential);
 
       navigate("/");
     },
@@ -45,12 +27,11 @@ export const AuthCallback = () => {
   );
 
   useEffect(() => {
-    console.log("lol");
     const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get("code");
+    const token = urlParams.get("access_token");
 
-    if (code) {
-      void handleGitHubCallback(code);
+    if (token) {
+      void handleGitHubCallback(token);
     }
   }, [handleGitHubCallback]);
 
