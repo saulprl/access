@@ -19,23 +19,16 @@ export const AuthCallback = () => {
   const handleGitHubCallback = useCallback(
     async (code: string) => {
       const uri = new URL("https://github.com/login/oauth/access_token");
-      uri.searchParams.append(
-        "client_id",
-        import.meta.env.VITE_GITHUB_CLIENT_ID as string,
-      );
-      uri.searchParams.append(
-        "client_secret",
-        import.meta.env.VITE_GITHUB_CLIENT_SECRET as string,
-      );
-      uri.searchParams.append("code", code);
-      uri.searchParams.append(
-        "redirect_uri",
-        import.meta.env.VITE_GITHUB_CALLBACK_URL as string,
-      );
+      const body = {
+        client_id: import.meta.env.VITE_GITHUB_CLIENT_ID as string,
+        client_secret: import.meta.env.VITE_GITHUB_CLIENT_SECRET as string,
+        code,
+      };
 
       const res = await fetch(uri, {
         method: "POST",
         headers: { Accept: "application/json" },
+        body: JSON.stringify(body),
       });
 
       const data = await res.json();
