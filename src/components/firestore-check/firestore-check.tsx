@@ -7,19 +7,20 @@ import { useFirestore, useFirestoreDocData } from "reactfire";
 import { Splash } from "../splash";
 import { SignUp } from "../sign-up";
 
-import { MigrationComplete } from "../../routes/migration-complete";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
   userUid: string;
 }
 
 export const FirestoreCheck: FC<Props> = ({ userUid }) => {
+  const navigate = useNavigate();
   const firestore = useFirestore();
   const {
     status,
     data: userDocData,
     error,
-  } = useFirestoreDocData(doc(firestore, "users", `${userUid}1`));
+  } = useFirestoreDocData(doc(firestore, "users", `${userUid}`));
 
   if (status === "loading") {
     return <Splash loading />;
@@ -30,7 +31,7 @@ export const FirestoreCheck: FC<Props> = ({ userUid }) => {
   }
 
   if (userDocData) {
-    return <MigrationComplete />;
+    navigate("/migration-complete");
   }
 
   return <SignUp />;

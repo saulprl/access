@@ -9,7 +9,7 @@ import { FirestoreCheck } from "../components/firestore-check";
 export const Index = () => {
   const { status, data: signInCheck, error } = useSigninCheck();
 
-  if (status === "loading") {
+  if (status === "loading" ) {
     return <Splash loading />;
   }
 

@@ -13,7 +13,7 @@ import {
   ref,
 } from "firebase/database";
 
-import { useAuth, useDatabase, useUser } from "reactfire";
+import { useAuth, useDatabase, useFirestore, useUser } from "reactfire";
 
 import { BiSolidLock } from "react-icons/bi";
 import { BsFillCalendarFill, BsFillPersonFill } from "react-icons/bs";
@@ -24,6 +24,8 @@ import { Input } from "../input";
 import { LoadingSpinner } from "../loading-spinner";
 import { Splash } from "../splash";
 import { Step } from "../step";
+import { Timestamp, doc, setDoc } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 
 const passcodeRegex = /^(?=.*[\d])(?=.*[A-D])[\dA-D]{4,8}$/gim;
 
@@ -47,8 +49,10 @@ interface MigrationForm {
 export const SignUp = () => {
   const auth = useAuth();
   const db = useDatabase();
+  const firestore = useFirestore();
   const { status: userStatus, data: user, error: userError } = useUser();
-  user;
+
+  const navigate = useNavigate();
 
   const [legacyUser, setLegacyUser] = useState<LegacyUser>();
   const [legacyUserLoading, setLegacyUserLoading] = useState(false);
@@ -70,15 +74,12 @@ export const SignUp = () => {
       name: legacyUser?.name,
     },
   });
-  getPersonal();
 
   const {
     control: credentialsControl,
-    getValues: getCredentials,
     handleSubmit: handleCredentialsSubmit,
     formState: { errors: credentialsErrors },
   } = useForm<Pick<MigrationForm, "passcode">>();
-  getCredentials();
 
   const [step, setStep] = useState(0);
 
@@ -86,6 +87,8 @@ export const SignUp = () => {
   const [nameError, setNameError] = useState("");
   const [dobError, setDobError] = useState("");
   const [passcodeError, setPasscodeError] = useState("");
+  const [migrationError, setMigrationError] = useState("");
+  const [migrationLoading, setMigrationLoading] = useState(false);
 
   useEffect(() => {
     setLegacyUserLoading(false);
@@ -195,7 +198,46 @@ export const SignUp = () => {
       return;
     }
 
-    console.log("Success");
+    void submitDataToFirestore();
+  };
+
+  const submitDataToFirestore = async () => {
+    setMigrationLoading(true);
+    setMigrationError("");
+
+    try {
+      const { name, dob } = getPersonal();
+
+      const utcDob = new Date(dob);
+      const offsetDob = new Date(
+        utcDob.getTime() + utcDob.getTimezoneOffset() * 60 * 1000,
+      );
+
+      if (!user || !legacyUser || !name || !dob) {
+        throw "Some of the data is missing. Please, refresh the page and try again.";
+      }
+
+      const { unisonId, csiId, passcode } = legacyUser;
+
+      const migratedUserDoc = doc(firestore, "users", user.uid);
+
+      await setDoc(migratedUserDoc, {
+        name,
+        unisonId,
+        csiId,
+        passcode,
+        dateOfBirth: Timestamp.fromDate(offsetDob),
+        createdAt: Timestamp.now(),
+      });
+
+      navigate("/migration-complete");
+    } catch (error) {
+      console.error(error);
+
+      setMigrationError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setMigrationLoading(false);
+    }
   };
 
   if (userStatus === "loading") {
@@ -329,13 +371,10 @@ export const SignUp = () => {
           </Step>
           <Step>
             <form
-              className="flex w-full flex-col items-center justify-center gap-2"
+              className="relative flex w-full flex-col items-center justify-center gap-2"
               onSubmit={handleCredentialsSubmit(onCredentialsSubmit)}
             >
               <h2 className="text-center text-xl">Access data</h2>
-              <p className="text-center text-sm">
-                Please, enter your <strong>CSI Passcode</strong>
-              </p>
               {legacyUser && (
                 <>
                   <p className="text-center">
@@ -357,7 +396,7 @@ export const SignUp = () => {
                     icon={<BiSolidLock />}
                     label="CSI Passcode"
                     placeholder=" "
-                    tooltip="Only numbers and letters. Case sensitive."
+                    tooltip="Only numbers and letters. Case insensitive."
                     type="password"
                     error={passcodeError || credentialsErrors.passcode?.message}
                     disabled={disableInputs}
@@ -378,6 +417,18 @@ export const SignUp = () => {
                   className="flex-[2]"
                   disabled={disableInputs}
                 />
+              </div>
+              <div className="absolute -bottom-16 left-[50%] flex w-full -translate-x-[50%] flex-col items-center justify-center gap-2">
+                {migrationLoading && (
+                  <div className="mt-px">
+                    <LoadingSpinner onBackground />
+                  </div>
+                )}
+                {migrationError && (
+                  <p className="mt-px text-center text-sm text-error">
+                    {migrationError}
+                  </p>
+                )}
               </div>
             </form>
           </Step>

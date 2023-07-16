@@ -9,14 +9,16 @@ interface Props {
 
 export const Splash = ({ message, loading = false }: Props) => {
   return (
-    <div className="flex min-h-full min-w-full flex-col items-center justify-end gap-4 pb-4">
+    <>
       <img
         src={accessIcon}
         width={350}
-        className="absolute left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]"
+        className="absolute left-[50%] top-[40%] translate-x-[-50%] translate-y-[-50%]"
       />
-      {loading && <LoadingSpinner />}
-      {message && <p className="max-w-[90%] text-center">{message}</p>}
-    </div>
+      <div className="pb-16 flex w-full h-full flex-col items-center justify-end gap-4">
+        {loading && <LoadingSpinner />}
+        {message && <p className="max-w-[90%] text-center">{message}</p>}
+      </div>
+    </>
   );
 };
