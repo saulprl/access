@@ -32,7 +32,7 @@ export const SignUp = () => {
   const { status: userStatus, data: user, error: userError } = useUser();
   console.log(user);
 
-  const [step, setStep] = useState(3);
+  const [step, setStep] = useState(0);
 
   const [unisonId, setUnisonId] = useState("");
   const [unisonIdValid, setUnisonIdValid] = useState(false);
