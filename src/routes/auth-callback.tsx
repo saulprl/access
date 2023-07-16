@@ -31,7 +31,7 @@ export const AuthCallback = () => {
         );
 
         if (response.status === 200) {
-          const token = response.data.token as string;
+          const token = response.data.accessToken as string;
 
           const credential = GithubAuthProvider.credential(token);
           await signInWithCredential(auth, credential);
