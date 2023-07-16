@@ -1,14 +1,9 @@
-import { ChangeEvent, useEffect, useState } from "react";
+import bcrypt from "bcryptjs";
 
-import { BiSolidLock } from "react-icons/bi";
-import { BsFillCalendarFill, BsFillPersonFill } from "react-icons/bs";
-import { FaIdBadge } from "react-icons/fa";
+import { useEffect, useState } from "react";
 
-import { Button } from "../button";
-import { Input } from "../input";
-import { Step } from "../step";
-import { useAuth, useDatabase, useUser } from "reactfire";
-import { Splash } from "../splash";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
+
 import {
   equalTo,
   limitToFirst,
@@ -17,10 +12,20 @@ import {
   query,
   ref,
 } from "firebase/database";
-import { Controller, SubmitHandler, useForm } from "react-hook-form";
-import { LoadingSpinner } from "../loading-spinner";
 
-const passcodeRegex = /^(?=.*[\d])(?=.*[A-D])[\dA-D]{4,8}$/gm;
+import { useAuth, useDatabase, useUser } from "reactfire";
+
+import { BiSolidLock } from "react-icons/bi";
+import { BsFillCalendarFill, BsFillPersonFill } from "react-icons/bs";
+import { FaIdBadge } from "react-icons/fa";
+
+import { Button } from "../button";
+import { Input } from "../input";
+import { LoadingSpinner } from "../loading-spinner";
+import { Splash } from "../splash";
+import { Step } from "../step";
+
+const passcodeRegex = /^(?=.*[\d])(?=.*[A-D])[\dA-D]{4,8}$/gim;
 
 interface LegacyUser {
   name: string;
@@ -33,56 +38,62 @@ interface UniSonIDForm {
   unisonId: string;
 }
 
+interface MigrationForm {
+  name: string;
+  dob: string;
+  passcode: string;
+}
+
 export const SignUp = () => {
   const auth = useAuth();
   const db = useDatabase();
   const { status: userStatus, data: user, error: userError } = useUser();
-  console.log(user);
+  user;
 
-  const { control: unisonIdControl, handleSubmit: handleUnisonIdSubmit } =
-    useForm<UniSonIDForm>();
+  const [legacyUser, setLegacyUser] = useState<LegacyUser>();
+  const [legacyUserLoading, setLegacyUserLoading] = useState(false);
+
+  const {
+    control: unisonIdControl,
+    handleSubmit: handleUnisonIdSubmit,
+    formState: { errors: unisonIdErrors },
+  } = useForm<UniSonIDForm>();
+
+  const {
+    control: personalControl,
+    getValues: getPersonal,
+    handleSubmit: handlePersonalSubmit,
+    reset: resetPersonal,
+    formState: { errors: personalErrors },
+  } = useForm<Omit<MigrationForm, "passcode">>({
+    defaultValues: {
+      name: legacyUser?.name,
+    },
+  });
+  getPersonal();
+
+  const {
+    control: credentialsControl,
+    getValues: getCredentials,
+    handleSubmit: handleCredentialsSubmit,
+    formState: { errors: credentialsErrors },
+  } = useForm<Pick<MigrationForm, "passcode">>();
+  getCredentials();
 
   const [step, setStep] = useState(0);
 
   const [unisonIdError, setUnisonIdError] = useState<string>();
-  const [legacyUserLoading, setLegacyUserLoading] = useState(false);
-
-  const [legacyUser, setLegacyUser] = useState<LegacyUser>();
-  const [name, setName] = useState("");
   const [nameError, setNameError] = useState("");
-
-  const [dobValue, setDobValue] = useState("");
-  const [dob, setDob] = useState<Date | undefined>(undefined);
   const [dobError, setDobError] = useState("");
-
-  const [csiId, setCsiId] = useState<number>();
-
-  const [passcode, setPasscode] = useState("");
   const [passcodeError, setPasscodeError] = useState("");
-
-  // const clearData = () => {
-  //   setName("");
-  //   setDob(undefined);
-  //   setDobValue("");
-  //   setPasscode("");
-  //   setCsiId(undefined);
-  //   setUnisonIdValid(false);
-  // };
-
-  // useEffect(() => {
-  //   if (!legacyData || legacyData.length === 0) return;
-
-  //   const legacyUser = legacyData[0];
-  //   if (!legacyUser) return;
-
-  //   setName(legacyUser.name);
-  //   setCsiId(legacyUser.csiId);
-  //   setUnisonIdValid(true);
-  // }, [legacyData]);
 
   useEffect(() => {
     setLegacyUserLoading(false);
-  }, [legacyUser]);
+
+    resetPersonal({
+      name: legacyUser?.name,
+    });
+  }, [legacyUser, resetPersonal]);
 
   const previousStep = () => {
     setStep((prev) => prev - 1);
@@ -101,6 +112,8 @@ export const SignUp = () => {
   };
 
   const onUnisonIdSubmit: SubmitHandler<UniSonIDForm> = (data) => {
+    if (step > 1) return;
+
     setLegacyUserLoading(true);
 
     const usersRef = ref(db, "users");
@@ -123,6 +136,8 @@ export const SignUp = () => {
               if (!legacyUser) return;
 
               setLegacyUser(legacyUser);
+
+              setTimeout(() => nextStep(), 300);
             }
           });
         } else {
@@ -135,59 +150,52 @@ export const SignUp = () => {
     );
   };
 
-  const handleNameChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setName(event.target.value);
-  };
-
-  const handleDateChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const inputDate = event.target.valueAsDate;
-    if (!inputDate) {
-      return;
-    }
-
-    console.log(dob);
-    const offset = inputDate.getTimezoneOffset();
-    const offsetDate = new Date(inputDate.getTime() + offset * 60 * 1000);
-
-    setDob(offsetDate);
-    setDobValue(event.target.value);
-  };
-
-  const handlePasscodeChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setPasscode(event.target.value?.trim().toUpperCase());
-  };
-
   const clearPersonalDataErrors = () => {
     setNameError("");
     setDobError("");
   };
 
-  const validatePersonalData = () => {
+  const onPersonalSubmit: SubmitHandler<Omit<MigrationForm, "passcode">> = (
+    data,
+  ) => {
+    if (step > 2) return;
     clearPersonalDataErrors();
 
-    if (name.length < 3) {
-      setNameError("Name must be at least 3 characters long");
-      return;
-    }
+    const { name, dob } = data;
+    if (!name || !dob) return;
+    console.log(data);
 
-    if (!dob) {
-      setDobError("Please provide a valid date");
+    if (name.trim().length < 3) {
+      setNameError("Name must be at least 3 characters long");
       return;
     }
 
     nextStep();
   };
 
-  const validateCredentials = () => {
+  const onCredentialsSubmit: SubmitHandler<
+    Pick<MigrationForm, "passcode">
+  > = async (data) => {
     setPasscodeError("");
+    console.log(data);
 
-    if (!passcodeRegex.test(passcode)) {
-      setPasscodeError("Please provide a valid passcode");
+    const passcode = data.passcode.trim().toUpperCase();
+    if (!legacyUser) {
+      setPasscodeError("Something went wrong");
       return;
     }
 
-    setCsiId(2);
-    nextStep();
+    if (!passcodeRegex.test(passcode)) {
+      setPasscodeError("Invalid passcode");
+      return;
+    }
+
+    if (!(await bcrypt.compare(passcode, legacyUser.passcode))) {
+      setPasscodeError("Passcode doesn't match");
+      return;
+    }
+
+    console.log("Success");
   };
 
   if (userStatus === "loading") {
@@ -223,6 +231,9 @@ export const SignUp = () => {
               <Controller
                 control={unisonIdControl}
                 name="unisonId"
+                rules={{
+                  required: "Your UniSon ID is required",
+                }}
                 render={({ field }) => (
                   <Input
                     {...field}
@@ -231,7 +242,7 @@ export const SignUp = () => {
                     icon={<FaIdBadge />}
                     placeholder="e.g. 217200160"
                     type="number"
-                    error={unisonIdError}
+                    error={unisonIdError || unisonIdErrors.unisonId?.message}
                   />
                 )}
               />
@@ -258,86 +269,117 @@ export const SignUp = () => {
             </form>
           </Step>
           <Step>
-            <h2 className="text-center text-xl">Personal data</h2>
-            <Input
-              disabled
-              id="unison-id"
-              label="UniSon ID"
-              icon={<FaIdBadge />}
-              value={unisonIdError}
-            />
-            <Input
-              id="access-name"
-              label="Name"
-              icon={<BsFillPersonFill />}
-              onChange={handleNameChange}
-              placeholder="e.g. Saúl Ramos"
-              value={name}
-              error={nameError}
-              disabled={disableInputs}
-            />
-            <Input
-              id="dob"
-              label="Date of birth"
-              icon={<BsFillCalendarFill />}
-              onChange={handleDateChange}
-              value={dobValue}
-              type="date"
-              error={dobError}
-              disabled={disableInputs}
-            />
-            <div className="mt-1 flex w-full flex-row justify-between gap-2">
-              <Button
-                variant="secondary"
-                label="Back"
-                onClick={handleGoBack}
-                className="flex-1"
+            <form
+              className="flex w-full flex-col items-center justify-center gap-2"
+              onSubmit={handlePersonalSubmit(onPersonalSubmit)}
+            >
+              <h2 className="text-center text-xl">Personal data</h2>
+              <Controller
+                name="name"
+                control={personalControl}
+                rules={{
+                  required: "Your name is required",
+                }}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    id="access-name"
+                    label="Name"
+                    icon={<BsFillPersonFill />}
+                    placeholder="e.g. Saúl Ramos"
+                    error={nameError || personalErrors.name?.message}
+                    disabled={disableInputs}
+                  />
+                )}
               />
-              <Button
-                label="Next"
-                onClick={validatePersonalData}
-                className="flex-[2]"
-                disabled={disableInputs}
+              <Controller
+                name="dob"
+                control={personalControl}
+                rules={{
+                  required: "Your date of birth is required",
+                }}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    id="dob"
+                    label="Date of birth"
+                    icon={<BsFillCalendarFill />}
+                    type="date"
+                    error={dobError || personalErrors.dob?.message}
+                    disabled={disableInputs}
+                  />
+                )}
               />
-            </div>
+              <div className="mt-1 flex w-full flex-row justify-between gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  label="Back"
+                  onClick={handleGoBack}
+                  className="flex-1"
+                />
+                <Button
+                  type="submit"
+                  label="Next"
+                  className="flex-[2]"
+                  disabled={disableInputs}
+                />
+              </div>
+            </form>
           </Step>
           <Step>
-            <h2 className="text-center text-xl">Access data</h2>
-            <p className="text-center text-sm">
-              Please, enter your <strong>CSI Passcode</strong>
-            </p>
-            <p className="text-center">
-              Your <strong>CSI ID</strong> is
-            </p>
-            <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-primary-700 text-center tabular-nums ">
-              {csiId}
-            </span>
-            <Input
-              id="passcode"
-              icon={<BiSolidLock />}
-              label="CSI Passcode"
-              placeholder=" "
-              tooltip="Only numbers and letters. Case insensitive."
-              value={passcode}
-              onChange={handlePasscodeChange}
-              type="password"
-              error={passcodeError}
-              disabled={disableInputs}
-            />
-            <div className="mt-1 flex w-full flex-row justify-between gap-2">
-              <Button
-                variant="secondary"
-                label="Back"
-                onClick={handleGoBack}
-                className="flex-1"
+            <form
+              className="flex w-full flex-col items-center justify-center gap-2"
+              onSubmit={handleCredentialsSubmit(onCredentialsSubmit)}
+            >
+              <h2 className="text-center text-xl">Access data</h2>
+              <p className="text-center text-sm">
+                Please, enter your <strong>CSI Passcode</strong>
+              </p>
+              {legacyUser && (
+                <>
+                  <p className="text-center">
+                    Your <strong>CSI ID</strong> is
+                  </p>
+                  <span className="mb-1 flex h-12 w-12 items-center justify-center rounded-full border-2 border-primary-700 text-center tabular-nums ">
+                    {legacyUser.csiId}
+                  </span>
+                </>
+              )}
+              <Controller
+                name="passcode"
+                control={credentialsControl}
+                rules={{ required: "Your passcode is required" }}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    id="passcode"
+                    icon={<BiSolidLock />}
+                    label="CSI Passcode"
+                    placeholder=" "
+                    tooltip="Only numbers and letters. Case sensitive."
+                    type="password"
+                    error={passcodeError || credentialsErrors.passcode?.message}
+                    disabled={disableInputs}
+                  />
+                )}
               />
-              <Button
-                label="Complete setup"
-                onClick={validateCredentials}
-                className="flex-[2]"
-                disabled={disableInputs}
-              />
-            </div>
+              <div className="mt-1 flex w-full flex-row justify-between gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  label="Back"
+                  onClick={handleGoBack}
+                  className="flex-1"
+                />
+                <Button
+                  type="submit"
+                  label="Complete setup"
+                  className="flex-[2]"
+                  disabled={disableInputs}
+                />
+              </div>
+            </form>
           </Step>
         </div>
       </div>

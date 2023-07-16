@@ -55,22 +55,24 @@ export const Input: FC<Props> = ({
   return (
     <IconContext.Provider
       value={{
-        size: "24px",
-        color: disabled ? "#94a3b8" : isFocused ? "#7145d6" : "#172A53",
-        style: { transition: "color", transitionDuration: "200ms" },
+        className: `${
+          disabled
+            ? "text-slate-400"
+            : isFocused
+            ? "text-primary-700"
+            : "text-slate-900"
+        } text-2xl transition-colors duration-200`,
       }}
     >
       <div className="w-full">
         <div
-          className="relative flex flex-row items-center rounded-full border border-slate-900 p-3 pl-12 transition-colors duration-200"
-          style={{
-            borderColor: disabled
-              ? "#94a3b8"
+          className={` relative flex flex-row items-center rounded-full border p-3 pl-12 transition-colors duration-200 ${
+            disabled
+              ? "border-slate-400"
               : isFocused
-              ? "#7145d6"
-              : "#172A53",
-            paddingRight: tooltip ? "2.25rem" : "0.75rem",
-          }}
+              ? "border-primary-700"
+              : "border-slate-900"
+          } ${tooltip ? "pr-9" : "pr-3"}`}
         >
           <span className="absolute left-3">{icon}</span>
           <input
@@ -94,19 +96,29 @@ export const Input: FC<Props> = ({
           </label>
           {tooltip && (
             <IconContext.Provider
-              value={{ size: "16px", className: "text-slate-900" }}
+              value={{
+                className: `${
+                  disabled
+                    ? "text-slate-400"
+                    : isFocused
+                    ? "text-secondary"
+                    : "text-slate-900"
+                } text-base transition-colors duration-200`,
+              }}
             >
               <span className="peer/tooltip absolute right-3">
                 <AiOutlineQuestionCircle />
               </span>
-              <span className="absolute bottom-12 right-3 z-20 block max-w-[80%] scale-90 rounded-lg bg-slate-600 p-2 text-right text-xs text-slate-300 opacity-0 transition-all duration-200 peer-hover/tooltip:scale-100 peer-hover/tooltip:opacity-100">
-                {tooltip}
-              </span>
+              {!disabled && (
+                <span className="absolute bottom-12 right-3 z-20 block max-w-[80%] scale-90 rounded-lg bg-slate-600 p-2 text-right text-xs text-slate-300 opacity-0 transition-all duration-200 peer-hover/tooltip:scale-100 peer-hover/tooltip:opacity-100">
+                  {tooltip}
+                </span>
+              )}
             </IconContext.Provider>
           )}
         </div>
         {error && (
-          <p className="mt-1 max-w-[60%] mx-auto text-xs text-error">{error}</p>
+          <p className="mx-auto mt-1 max-w-[60%] text-xs text-error">{error}</p>
         )}
       </div>
     </IconContext.Provider>
