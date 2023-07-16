@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import axios from "axios";
+
 import { useCallback, useEffect } from "react";
 
 import {
@@ -17,21 +18,39 @@ export const AuthCallback = () => {
   const navigate = useNavigate();
 
   const handleGitHubCallback = useCallback(
-    async (token: string) => {
-      const credential = GithubAuthProvider.credential(token);
-      await signInWithCredential(auth, credential);
+    async (code: string) => {
+      try {
+        const serverUrl = `${
+          import.meta.env.VITE_GITHUB_CALLBACK_URL as string
+        }/?code=${code}`;
 
-      navigate("/");
+        const response = await axios.post(
+          serverUrl,
+          {},
+          { headers: { Accept: "application/json" } },
+        );
+
+        if (response.status === 200) {
+          const token = response.data.token as string;
+
+          const credential = GithubAuthProvider.credential(token);
+          await signInWithCredential(auth, credential);
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        navigate("/");
+      }
     },
     [auth, navigate],
   );
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get("access_token");
+    const code = urlParams.get("code");
 
-    if (token) {
-      void handleGitHubCallback(token);
+    if (code) {
+      void handleGitHubCallback(code);
     }
   }, [handleGitHubCallback]);
 

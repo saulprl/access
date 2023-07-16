@@ -7,10 +7,12 @@ import { FaIdBadge } from "react-icons/fa";
 import { Button } from "../button";
 import { Input } from "../input";
 import { Step } from "../step";
+import { useAuth } from "reactfire";
 
 const passcodeRegex = /^(?=.*[\d])(?=.*[A-D])[\dA-D]{4,8}$/gm;
 
 export const SignUp = () => {
+  const auth = useAuth();
   const [step, setStep] = useState(0);
 
   const [unisonId, setUnisonId] = useState("217200160");
@@ -111,6 +113,11 @@ export const SignUp = () => {
   return (
     <div className="absolute top-0 flex h-full w-full translate-x-[100%] animate-slide-in flex-row items-center justify-start overflow-hidden bg-slate-100 sm:rounded-lg">
       <div className="relative top-0 h-full w-full overflow-hidden">
+        <Button
+          className="absolute left-4 top-4 w-28"
+          label="Sign out"
+          onClick={() => void auth.signOut()}
+        />
         <div
           className="flex h-full transition-transform duration-500"
           style={{ transform: `translateX(-${step * 100}%)` }}
