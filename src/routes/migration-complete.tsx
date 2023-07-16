@@ -1,0 +1,31 @@
+import { useAuth } from "reactfire";
+import { Button } from "../components/button";
+
+export const MigrationComplete = () => {
+  const auth = useAuth();
+
+  const handleSignOut = async () => {
+    await auth.signOut();
+  };
+
+  return (
+    <div className="absolute top-0 flex h-full w-full translate-x-[100%] animate-slide-in flex-row items-center justify-start overflow-hidden bg-slate-100 sm:rounded-lg">
+      <div className="flex h-full w-full flex-col items-center justify-center">
+        <h1 className="text-center text-3xl font-bold text-primary-700">
+          You're all set!
+        </h1>
+        <p className="max-w-[60%] text-center text-primary-700">
+          Thanks for helping out with the migration process
+        </p>
+        <h2 className="text-center text-xl font-bold text-primary-700">
+          Happy coding!
+        </h2>
+        <Button
+          label="Sign out"
+          onClick={handleSignOut}
+          className="mt-12 w-36"
+        />
+      </div>
+    </div>
+  );
+};

@@ -4,7 +4,7 @@ import { Splash } from "../components/splash";
 import { SignInButton } from "../components/sign-in-button";
 
 import accessLogo from "../assets/csipro-access.png";
-import { SignUp } from "../components/sign-up";
+import { FirestoreCheck } from "../components/firestore-check";
 
 export const Index = () => {
   const { status, data: signInCheck, error } = useSigninCheck();
@@ -21,7 +21,7 @@ export const Index = () => {
     <>
       {!signInCheck.signedIn && (
         <>
-          <img src={accessLogo} className="w-full" />
+          <img src={accessLogo} className="mt-12 w-full" />
           <div className="absolute bottom-28 flex w-full flex-col gap-4 sm:bottom-16">
             <SignInButton provider="GitHub" />
             <SignInButton provider="Google" />
@@ -32,15 +32,9 @@ export const Index = () => {
       {signInCheck.signedIn && (
         <>
           <Splash />
-          <SignUp />
+          <FirestoreCheck userUid={signInCheck.user.uid} />
         </>
       )}
-      {/* <button
-        className="absolute bottom-16 bg-slate-200 text-primary-700"
-        onClick={() => setSignedIn((prev) => !prev)}
-      >
-        Toggle
-      </button> */}
     </>
   );
 };

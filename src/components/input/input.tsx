@@ -22,6 +22,7 @@ interface Props {
   placeholder?: string;
   type?: HTMLInputTypeAttribute;
   error?: string;
+  maxLength?: number;
 }
 
 export const Input: FC<Props> = ({
@@ -32,6 +33,7 @@ export const Input: FC<Props> = ({
   tooltip,
   placeholder,
   error,
+  maxLength,
   onChange,
   disabled = false,
   type = "text",
@@ -65,6 +67,7 @@ export const Input: FC<Props> = ({
               : isFocused
               ? "#7145d6"
               : "#172A53",
+            paddingRight: tooltip ? "2.25rem" : "0.75rem",
           }}
         >
           <span className="absolute left-3">{icon}</span>
@@ -78,6 +81,7 @@ export const Input: FC<Props> = ({
             onFocus={handleFocus}
             onBlur={handleBlur}
             type={type}
+            maxLength={maxLength}
           />
           <label
             htmlFor={id}
@@ -92,7 +96,7 @@ export const Input: FC<Props> = ({
               <span className="peer/tooltip absolute right-3">
                 <AiOutlineQuestionCircle />
               </span>
-              <span className="absolute bottom-12 right-3 block max-w-full scale-90 rounded-lg bg-slate-600 p-2 text-xs text-slate-300 opacity-0 transition-all duration-200 peer-hover/tooltip:scale-100 peer-hover/tooltip:opacity-100">
+              <span className="absolute bottom-12 right-3 z-20 block max-w-[80%] scale-90 rounded-lg bg-slate-600 p-2 text-right text-xs text-slate-300 opacity-0 transition-all duration-200 peer-hover/tooltip:scale-100 peer-hover/tooltip:opacity-100">
                 {tooltip}
               </span>
             </IconContext.Provider>

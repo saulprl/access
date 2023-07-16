@@ -13,6 +13,7 @@ import { Root } from "./routes/root.tsx";
 import { ErrorPage } from "./error.tsx";
 import { Index } from "./routes/index.tsx";
 import { AuthCallback } from "./routes/auth-callback.tsx";
+import { MigrationComplete } from "./routes/migration-complete.tsx";
 
 const router = createBrowserRouter([
   {
@@ -21,6 +22,7 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       { path: "", element: <Index /> },
+      { path: "/migration-complete", element: <MigrationComplete /> },
       { path: "/oauth/callback", element: <AuthCallback /> },
     ],
   },

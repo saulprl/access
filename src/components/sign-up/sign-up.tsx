@@ -1,4 +1,4 @@
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 
 import { BiSolidLock } from "react-icons/bi";
 import { BsFillCalendarFill, BsFillPersonFill } from "react-icons/bs";
@@ -7,28 +7,86 @@ import { FaIdBadge } from "react-icons/fa";
 import { Button } from "../button";
 import { Input } from "../input";
 import { Step } from "../step";
-import { useAuth } from "reactfire";
+import { useAuth, useDatabase, useDatabaseListData, useUser } from "reactfire";
+import { Splash } from "../splash";
+import {
+  equalTo,
+  limitToFirst,
+  orderByChild,
+  query,
+  ref,
+} from "firebase/database";
 
 const passcodeRegex = /^(?=.*[\d])(?=.*[A-D])[\dA-D]{4,8}$/gm;
 
+interface LegacyUser {
+  name: string;
+  unisonId: string;
+  csiId: number;
+  passcode: string;
+}
+
 export const SignUp = () => {
   const auth = useAuth();
-  const [step, setStep] = useState(0);
+  const db = useDatabase();
+  const { status: userStatus, data: user, error: userError } = useUser();
+  console.log(user);
 
-  const [unisonId, setUnisonId] = useState("217200160");
+  const [step, setStep] = useState(3);
+
+  const [unisonId, setUnisonId] = useState("");
   const [unisonIdValid, setUnisonIdValid] = useState(false);
 
-  const [name, setName] = useState("Saúl Ramos");
+  const usersRef = ref(db, "users");
+  const usersQuery = query(
+    usersRef,
+    orderByChild("unisonId"),
+    equalTo(unisonId),
+    limitToFirst(1),
+  );
+  const {
+    status: legacyStatus,
+    data: legacyData,
+    error: legacyError,
+  } = useDatabaseListData<LegacyUser | undefined>(usersQuery, {
+    idField: "key",
+  });
+
+  const [name, setName] = useState("");
   const [nameError, setNameError] = useState("");
 
   const [dobValue, setDobValue] = useState("");
   const [dob, setDob] = useState<Date | undefined>(undefined);
   const [dobError, setDobError] = useState("");
 
-  const [csiId, setCsiId] = useState(1);
+  const [csiId, setCsiId] = useState<number>();
 
   const [passcode, setPasscode] = useState("");
   const [passcodeError, setPasscodeError] = useState("");
+
+  const clearData = () => {
+    setName("");
+    setDob(undefined);
+    setDobValue("");
+    setPasscode("");
+    setCsiId(undefined);
+    setUnisonIdValid(false);
+  };
+
+  useEffect(() => {
+    if (!legacyData || legacyData.length === 0) return;
+
+    const legacyUser = legacyData[0];
+    if (!legacyUser) return;
+
+    setName(legacyUser.name);
+    setCsiId(legacyUser.csiId);
+    setUnisonIdValid(true);
+  }, [legacyData]);
+
+  useEffect(() => {
+    clearData();
+  }, [unisonId]);
 
   const previousStep = () => {
     setStep((prev) => prev - 1);
@@ -47,7 +105,6 @@ export const SignUp = () => {
   };
 
   const handleUnisonIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    console.log(event.target.value);
     setUnisonId(event.target.value);
   };
 
@@ -73,10 +130,6 @@ export const SignUp = () => {
     setPasscode(event.target.value?.trim().toUpperCase());
   };
 
-  const validateUnisonId = () => {
-    setUnisonIdValid(true);
-  };
-
   const clearPersonalDataErrors = () => {
     setNameError("");
     setDobError("");
@@ -91,7 +144,7 @@ export const SignUp = () => {
     }
 
     if (!dob) {
-      setDobError("Please provide a valid date of birth");
+      setDobError("Please provide a valid date");
       return;
     }
 
@@ -110,16 +163,29 @@ export const SignUp = () => {
     nextStep();
   };
 
+  if (userStatus === "loading") {
+    return <Splash loading />;
+  }
+
+  if (userError) {
+    console.error(legacyError);
+
+    return <Splash message="Error connecting to the Auth service" />;
+  }
+
+  const disableInputs =
+    !unisonIdValid || legacyStatus === "loading" || !legacyData;
+
   return (
     <div className="absolute top-0 flex h-full w-full translate-x-[100%] animate-slide-in flex-row items-center justify-start overflow-hidden bg-slate-100 sm:rounded-lg">
       <div className="relative top-0 h-full w-full overflow-hidden">
         <Button
-          className="absolute left-4 top-4 w-28"
+          className="absolute left-8 top-8 z-10 w-32"
           label="Sign out"
           onClick={() => void auth.signOut()}
         />
         <div
-          className="flex h-full transition-transform duration-500"
+          className="absolute top-0 flex h-full w-full transition-transform duration-500"
           style={{ transform: `translateX(-${step * 100}%)` }}
         >
           <Step className="animate-fade-in opacity-0">
@@ -138,8 +204,8 @@ export const SignUp = () => {
               value={unisonId}
               type="number"
               error=""
+              maxLength={9}
             />
-            <Button label="Check" onClick={validateUnisonId} className="mt-2" />
             <div className="mt-1 flex w-full flex-row justify-between gap-2">
               <Button
                 variant="secondary"
@@ -151,16 +217,12 @@ export const SignUp = () => {
                 label="Proceed"
                 onClick={handleProceed}
                 className="flex-[2]"
-                disabled={!unisonIdValid}
+                disabled={disableInputs}
               />
             </div>
           </Step>
           <Step>
             <h2 className="text-center text-xl">Personal data</h2>
-            <p className="mb-3 text-center text-sm">
-              The pre-populated fields contain data stored in the original{" "}
-              <strong>CSI PRO Access</strong> database
-            </p>
             <Input
               disabled
               id="unison-id"
@@ -176,6 +238,7 @@ export const SignUp = () => {
               placeholder="e.g. Saúl Ramos"
               value={name}
               error={nameError}
+              disabled={disableInputs}
             />
             <Input
               id="dob"
@@ -185,6 +248,7 @@ export const SignUp = () => {
               value={dobValue}
               type="date"
               error={dobError}
+              disabled={disableInputs}
             />
             <div className="mt-1 flex w-full flex-row justify-between gap-2">
               <Button
@@ -197,14 +261,14 @@ export const SignUp = () => {
                 label="Next"
                 onClick={validatePersonalData}
                 className="flex-[2]"
+                disabled={disableInputs}
               />
             </div>
           </Step>
           <Step>
             <h2 className="text-center text-xl">Access data</h2>
             <p className="text-center text-sm">
-              Please, enter your <strong>CSI Passcode</strong> to complete the
-              migration process
+              Please, enter your <strong>CSI Passcode</strong>
             </p>
             <p className="text-center">
               Your <strong>CSI ID</strong> is
@@ -222,6 +286,7 @@ export const SignUp = () => {
               onChange={handlePasscodeChange}
               type="password"
               error={passcodeError}
+              disabled={disableInputs}
             />
             <div className="mt-1 flex w-full flex-row justify-between gap-2">
               <Button
@@ -234,14 +299,9 @@ export const SignUp = () => {
                 label="Complete setup"
                 onClick={validateCredentials}
                 className="flex-[2]"
+                disabled={disableInputs}
               />
             </div>
-          </Step>
-          <Step>
-            <h1 className="text-center text-3xl font-bold">You're all set!</h1>
-            <p className="mb-3 text-center">
-              Thanks for helping out with the migration process
-            </p>
           </Step>
         </div>
       </div>

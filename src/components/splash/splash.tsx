@@ -9,7 +9,7 @@ interface Props {
 
 export const Splash = ({ message, loading = false }: Props) => {
   return (
-    <div className="flex min-h-full min-w-full flex-col items-center justify-end gap-4">
+    <div className="flex min-h-full min-w-full flex-col items-center justify-end gap-4 pb-4">
       <img
         src={accessIcon}
         width={350}
