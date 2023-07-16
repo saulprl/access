@@ -1,3 +1,4 @@
+// import { GithubAuthProvider, getAuth } from "firebase/auth";
 import { useState } from "react";
 
 import { IconContext } from "react-icons";
@@ -5,6 +6,7 @@ import { IconContext } from "react-icons";
 import { FaGithub } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { MdEmail } from "react-icons/md";
+// import { useFirebaseApp } from "reactfire";
 
 const providerLogos = {
   GitHub: (
@@ -25,19 +27,45 @@ export const SignInButton = (props: {
 }) => {
   const { provider } = props;
 
+  // const firebaseApp = useFirebaseApp();
+
   const [buttonText, setButtonText] = useState(`Sign in with ${provider}`);
-  let timer: ReturnType<typeof setTimeout> | null = null;
+  let timer: ReturnType<typeof setTimeout> | null;
+
+  const handleEmailClick = () => {
+    if (timer) {
+      clearTimeout(timer);
+    }
+
+    setButtonText("Nope - wrong option");
+    timer = setTimeout(() => {
+      setButtonText(`Sign in with ${provider}`);
+    }, 5000);
+  };
+
+  const handleGitHubClick = () => {
+    const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID as string;
+    const callbackUrl = import.meta.env.VITE_GITHUB_CALLBACK_URL as string;
+
+    const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(
+      callbackUrl,
+    )}&scope=user:email`;
+    window.location.href = authUrl;
+  };
+
+  // const handleGoogleClick = () => {};
 
   const handleClick = () => {
-    if (provider === "email") {
-      if (timer) {
-        clearTimeout(timer);
-      }
-
-      setButtonText("Nope - wrong option");
-      timer = setTimeout(() => {
-        setButtonText(`Sign in with ${provider}`);
-      }, 5000);
+    switch (provider) {
+      case "email":
+        handleEmailClick();
+        break;
+      case "GitHub":
+        handleGitHubClick();
+        break;
+      case "Google":
+      default:
+        break;
     }
   };
 
