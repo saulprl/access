@@ -277,7 +277,7 @@ export const SignUp = () => {
       await setDoc(migratedUserRoomsDoc, {
         key: csiproId,
         accessGranted: true,
-        role: memberRole,
+        roleId: memberRole,
       });
 
       navigate("/migration-complete");
