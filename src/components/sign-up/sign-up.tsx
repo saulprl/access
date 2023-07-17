@@ -37,7 +37,7 @@ import { LoadingSpinner } from "../loading-spinner";
 import { Splash } from "../splash";
 import { Step } from "../step";
 
-const passcodeRegex = /^(?=.*[\d])(?=.*[A-D])[\dA-D]{4,8}$/gim;
+// const passcodeRegex = /^(?=.*[\d])(?=.*[A-D])[\dA-D]{4,8}$/gim;
 
 interface LegacyUser {
   name: string;
@@ -194,14 +194,14 @@ export const SignUp = () => {
 
     const passcode = data.passcode.trim().toUpperCase();
     if (!legacyUser) {
-      setPasscodeError("Something went wrong");
+      setPasscodeError("Some of the data is missing. Please, refresh the page and try again.");
       return;
     }
 
-    if (!passcodeRegex.test(passcode)) {
-      setPasscodeError("Invalid passcode");
-      return;
-    }
+    // if (!passcodeRegex.test(passcode)) {
+    //   setPasscodeError("Invalid passcode");
+    //   return;
+    // }
 
     if (!(await bcrypt.compare(passcode, legacyUser.passcode))) {
       setPasscodeError("Passcode doesn't match");
