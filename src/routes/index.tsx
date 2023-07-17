@@ -9,7 +9,7 @@ import { FirestoreCheck } from "../components/firestore-check";
 export const Index = () => {
   const { status, data: signInCheck, error } = useSigninCheck();
 
-  if (status === "loading" ) {
+  if (status === "loading") {
     return <Splash loading />;
   }
 
@@ -21,7 +21,9 @@ export const Index = () => {
     <>
       {!signInCheck.signedIn && (
         <>
-          <img src={accessLogo} className="mt-12 w-full" />
+          <div className="w-full pt-20">
+            <img src={accessLogo} className="w-full" />
+          </div>
           <div className="absolute bottom-28 flex w-full flex-col gap-4 sm:bottom-16">
             <SignInButton provider="GitHub" />
             <SignInButton provider="Google" />
