@@ -1,5 +1,7 @@
 import { Outlet } from "react-router-dom";
 
+import { Toaster } from "react-hot-toast";
+
 import { getAuth } from "firebase/auth";
 import { getDatabase } from "firebase/database";
 import { getFirestore } from "firebase/firestore";
@@ -24,6 +26,7 @@ export const Root = () => {
       <DatabaseProvider sdk={db}>
         <FirestoreProvider sdk={firestore}>
           <Layout>
+            <Toaster position="bottom-center" />
             <Outlet />
           </Layout>
         </FirestoreProvider>

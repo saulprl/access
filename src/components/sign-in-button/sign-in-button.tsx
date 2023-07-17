@@ -1,11 +1,14 @@
 // import { GithubAuthProvider, getAuth } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useState } from "react";
+import { toast } from "react-hot-toast";
 
 import { IconContext } from "react-icons";
 
 import { FaGithub } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { MdEmail } from "react-icons/md";
+import { useAuth } from "reactfire";
 // import { useFirebaseApp } from "reactfire";
 
 const providerLogos = {
@@ -26,8 +29,7 @@ export const SignInButton = (props: {
   provider: "GitHub" | "Google" | "email";
 }) => {
   const { provider } = props;
-
-  // const firebaseApp = useFirebaseApp();
+  const auth = useAuth();
 
   const [buttonText, setButtonText] = useState(`Sign in with ${provider}`);
   let timer: ReturnType<typeof setTimeout> | null;
@@ -53,7 +55,15 @@ export const SignInButton = (props: {
     window.location.href = authUrl;
   };
 
-  // const handleGoogleClick = () => {};
+  const handleGoogleClick = async () => {
+    const google = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, google);
+    const credential = GoogleAuthProvider.credentialFromResult(result);
+    if (!credential) {
+      toast.error("Unable to sign in with Google");
+      return;
+    }
+  };
 
   const handleClick = () => {
     switch (provider) {
@@ -64,7 +74,10 @@ export const SignInButton = (props: {
         handleGitHubClick();
         break;
       case "Google":
+        void handleGoogleClick();
+        break;
       default:
+        toast.error("I don't know what you clicked wth");
         break;
     }
   };
