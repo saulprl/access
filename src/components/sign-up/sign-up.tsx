@@ -2,6 +2,8 @@ import bcrypt from "bcryptjs";
 
 import { useEffect, useState } from "react";
 
+import { useNavigate } from "react-router-dom";
+
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 
 import {
@@ -9,9 +11,19 @@ import {
   limitToFirst,
   onValue,
   orderByChild,
-  query,
+  query as dbQuery,
   ref,
 } from "firebase/database";
+import {
+  query as fsQuery,
+  Timestamp,
+  collection,
+  doc,
+  setDoc,
+  where,
+  limit,
+  getDocs,
+} from "firebase/firestore";
 
 import { useAuth, useDatabase, useFirestore, useUser } from "reactfire";
 
@@ -24,8 +36,6 @@ import { Input } from "../input";
 import { LoadingSpinner } from "../loading-spinner";
 import { Splash } from "../splash";
 import { Step } from "../step";
-import { Timestamp, doc, setDoc } from "firebase/firestore";
-import { useNavigate } from "react-router-dom";
 
 const passcodeRegex = /^(?=.*[\d])(?=.*[A-D])[\dA-D]{4,8}$/gim;
 
@@ -120,7 +130,7 @@ export const SignUp = () => {
     setLegacyUserLoading(true);
 
     const usersRef = ref(db, "users");
-    const usersQuery = query(
+    const usersQuery = dbQuery(
       usersRef,
       orderByChild("unisonId"),
       equalTo(data.unisonId),
@@ -219,7 +229,37 @@ export const SignUp = () => {
 
       const { unisonId, csiId, passcode } = legacyUser;
 
+      const rolesCollection = collection(firestore, "roles");
+      const rolesQuery = fsQuery(
+        rolesCollection,
+        where("name", "==", "Member"),
+        limit(1),
+      );
+      const rolesSnapshot = await getDocs(rolesQuery);
+      if (!rolesSnapshot.docs[0].exists()) {
+        throw "Something went wrong while processing the migration.";
+      }
+
+      const roomsCollection = collection(firestore, "rooms");
+      const roomsQuery = fsQuery(
+        roomsCollection,
+        where("name", "==", "CSI PRO"),
+        limit(1),
+      );
+      const roomsSnapshot = await getDocs(roomsQuery);
+      if (!roomsSnapshot.docs[0].exists()) {
+        throw "Something went wrong while processing the migration.";
+      }
+
+      const memberRole = rolesSnapshot.docs[0].ref;
+      const csiproId = roomsSnapshot.docs[0].id;
       const migratedUserDoc = doc(firestore, "users", user.uid);
+      const migratedUserRolesDoc = doc(firestore, "user_roles", user.uid);
+      const migratedUserRoomsDoc = doc(
+        migratedUserRolesDoc,
+        "room_roles",
+        csiproId,
+      );
 
       await setDoc(migratedUserDoc, {
         name,
@@ -228,6 +268,16 @@ export const SignUp = () => {
         passcode,
         dateOfBirth: Timestamp.fromDate(offsetDob),
         createdAt: Timestamp.now(),
+      });
+
+      await setDoc(migratedUserRolesDoc, {
+        key: user.uid,
+      });
+
+      await setDoc(migratedUserRoomsDoc, {
+        key: csiproId,
+        accessGranted: true,
+        role: memberRole,
       });
 
       navigate("/migration-complete");
