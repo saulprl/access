@@ -248,6 +248,7 @@ export const SignUp = () => {
       const csiproId = roomsSnapshot.docs[0].id;
 
       const migratedUserDoc = doc(firestore, "users", user.uid);
+      const migratedUserRolesDoc = doc(firestore, "user_roles", user.uid);
 
       await setDoc(migratedUserDoc, {
         name,
@@ -256,6 +257,10 @@ export const SignUp = () => {
         passcode,
         dateOfBirth: Timestamp.fromDate(offsetDob),
         createdAt: currentTimestamp,
+      });
+
+      await setDoc(migratedUserRolesDoc, {
+        key: user.uid,
       });
 
       const requestsCollection = collection(firestore, "requests");
