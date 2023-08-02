@@ -23,6 +23,7 @@ import {
   where,
   limit,
   getDocs,
+  addDoc,
 } from "firebase/firestore";
 
 import { useAuth, useDatabase, useFirestore, useUser } from "reactfire";
@@ -194,7 +195,9 @@ export const SignUp = () => {
 
     const passcode = data.passcode.trim().toUpperCase();
     if (!legacyUser) {
-      setPasscodeError("Some of the data is missing. Please, refresh the page and try again.");
+      setPasscodeError(
+        "Some of the data is missing. Please, refresh the page and try again.",
+      );
       return;
     }
 
@@ -223,22 +226,13 @@ export const SignUp = () => {
         utcDob.getTime() + utcDob.getTimezoneOffset() * 60 * 1000,
       );
 
+      const currentTimestamp = Timestamp.now();
+
       if (!user || !legacyUser || !name || !dob) {
         throw "Some of the data is missing. Please, refresh the page and try again.";
       }
 
       const { unisonId, csiId, passcode } = legacyUser;
-
-      const rolesCollection = collection(firestore, "roles");
-      const rolesQuery = fsQuery(
-        rolesCollection,
-        where("name", "==", "Member"),
-        limit(1),
-      );
-      const rolesSnapshot = await getDocs(rolesQuery);
-      if (!rolesSnapshot.docs[0].exists()) {
-        throw "Something went wrong while processing the migration.";
-      }
 
       const roomsCollection = collection(firestore, "rooms");
       const roomsQuery = fsQuery(
@@ -251,15 +245,9 @@ export const SignUp = () => {
         throw "Something went wrong while processing the migration.";
       }
 
-      const memberRole = rolesSnapshot.docs[0].ref;
       const csiproId = roomsSnapshot.docs[0].id;
+
       const migratedUserDoc = doc(firestore, "users", user.uid);
-      const migratedUserRolesDoc = doc(firestore, "user_roles", user.uid);
-      const migratedUserRoomsDoc = doc(
-        migratedUserRolesDoc,
-        "room_roles",
-        csiproId,
-      );
 
       await setDoc(migratedUserDoc, {
         name,
@@ -267,17 +255,18 @@ export const SignUp = () => {
         csiId,
         passcode,
         dateOfBirth: Timestamp.fromDate(offsetDob),
-        createdAt: Timestamp.now(),
+        createdAt: currentTimestamp,
       });
 
-      await setDoc(migratedUserRolesDoc, {
-        key: user.uid,
-      });
+      const requestsCollection = collection(firestore, "requests");
 
-      await setDoc(migratedUserRoomsDoc, {
-        key: csiproId,
-        accessGranted: true,
-        roleId: memberRole,
+      await addDoc(requestsCollection, {
+        status: 0,
+        userId: user.uid,
+        roomId: csiproId,
+        userComment: "Post-migration request",
+        createdAt: currentTimestamp,
+        updatedAt: currentTimestamp,
       });
 
       navigate("/migration-complete");

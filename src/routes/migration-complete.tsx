@@ -1,4 +1,4 @@
-import { useAuth, useUser } from "reactfire";
+import { useAuth, useSigninCheck } from "reactfire";
 
 import { Button } from "../components/button";
 import { Splash } from "../components/splash";
@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 export const MigrationComplete = () => {
   const navigate = useNavigate();
   const auth = useAuth();
-  const { status, data, error } = useUser();
+  const { status, data, error } = useSigninCheck();
 
   const handleSignOut = async () => {
     await auth.signOut();
@@ -21,7 +21,7 @@ export const MigrationComplete = () => {
     return <Splash message="Error connecting to the Auth service" />;
   }
 
-  if (!data) {
+  if (!data.signedIn) {
     navigate("/");
   }
 
